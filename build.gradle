@@ -37,10 +37,18 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:testcontainers")
     implementation("io.micronaut:micronaut-validation")
-    annotationProcessor("io.micronaut:micronaut-inject-java")
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
 
+    runtime("io.micronaut:micronaut-core:2.5.8")
+    implementation("io.micronaut:micronaut-runtime")
+    annotationProcessor("io.micronaut:micronaut-inject-java")
+
+    testImplementation("org.hamcrest:hamcrest-core:2.2")
     testImplementation("io.micronaut:micronaut-http-client")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.mockito:mockito-junit-jupiter:3.8.0")
+    testImplementation("org.mockito:mockito-inline:3.8.0")
 
 }
 
