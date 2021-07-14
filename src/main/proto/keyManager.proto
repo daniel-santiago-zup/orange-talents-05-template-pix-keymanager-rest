@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "br.com.zup.edu.proto";
+option java_outer_classname = "KeyManager";
+option objc_class_prefix = "HLW";
+
+package br.com.zup.edu;
+
+service KeyManagerService {
+  rpc detalhaChaveExternal (DetalhaChavePixExternalRequest) returns (DetalhaChavePixExternalResponse);
+  rpc detalhaChaveInternal (DetalhaChaveInternalRequest) returns (DetalhaChaveInternalResponse);
+  rpc listaChaves (ListaChavesRequest) returns (ListaChavesResponse);
+  rpc registraChave (CriaChavePixRequest) returns (CriaChavePixResponse);
+  rpc deletaChave (DeletaChavePixRequest) returns (DeletaChavePixResponse);
+}
+
+enum TipoChavePix {
+  UNKNOWN_TIPO_CHAVE = 0;
+  CPF = 1;
+  PHONE = 2;
+  EMAIL = 3;
+  RANDOM_KEY = 4;
+}
+
+enum TipoConta {
+  UNKNOWN_TIPO_CONTA = 0;
+  CONTA_CORRENTE = 1;
+  CONTA_POUPANCA = 2;
+}
+
+message CriaChavePixRequest {
+  string idCliente = 1;
+  TipoChavePix tipoChave = 2;
+  string valorChave = 3;
+  TipoConta tipoConta = 4;
+}
+
+message CriaChavePixResponse {
+  string pixId = 1;
+}
+
+message DeletaChavePixRequest {
+  string pixId = 1;
+}
+
+message DeletaChavePixResponse {}
+
+message DetalhaChavePixExternalRequest {
+  string idCliente = 1;
+  string pixId = 2;
+}
+
+message DetalhaChavePixExternalResponse {
+  string pixId = 1;
+  string idCliente = 2;
+  TipoChavePix tipoChave = 3;
+  string valorChave = 4;
+  Titular titular = 5;
+  Conta conta = 6;
+  string criadoEm = 7;
+
+  message Titular {
+    string nome = 1;
+    string cpf = 2;
+  }
+
+  message Conta {
+    string instituicao = 1;
+    string agencia = 2;
+    string numero = 3;
+    TipoConta tipo = 4;
+  }
+}
+
+message DetalhaChaveInternalRequest {
+  string chavePix = 1;
+}
+
+message DetalhaChaveInternalResponse {
+  TipoChavePix tipoChave = 3;
+  string valorChave = 4;
+  Titular titular = 5;
+  Conta conta = 6;
+  string criadoEm = 7;
+
+  message Titular {
+    string nome = 1;
+    string cpf = 2;
+  }
+
+  message Conta {
+    string instituicao = 1;
+    string agencia = 2;
+    string numero = 3;
+    TipoConta tipo = 4;
+  }
+}
+
+message ListaChavesRequest {
+  string idCliente = 1;
+}
+
+message ListaChavesResponse {
+  repeated ListaChavesDetails chaves = 1;
+
+  message ListaChavesDetails {
+    string pixId = 1;
+    string idCliente = 2;
+    TipoChavePix tipoChave = 3;
+    string valorChave = 4;
+    TipoConta tipoConta = 5;
+    string criadoEm = 6;
+}
+}
