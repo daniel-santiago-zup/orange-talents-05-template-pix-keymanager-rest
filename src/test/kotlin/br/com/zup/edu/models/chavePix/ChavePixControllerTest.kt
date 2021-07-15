@@ -1,10 +1,7 @@
 package br.com.zup.edu.models.chavePix
 
 import br.com.zup.edu.external.KeyManagerGrpcClientFactory
-import br.com.zup.edu.proto.CriaChavePixResponse
-import br.com.zup.edu.proto.DeletaChavePixRequest
-import br.com.zup.edu.proto.KeyManagerServiceGrpc
-import br.com.zup.edu.proto.TipoConta
+import br.com.zup.edu.proto.*
 import io.micronaut.context.annotation.Factory
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.http.HttpRequest
@@ -15,6 +12,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -68,6 +66,58 @@ internal class ChavePixControllerTest {
 
     }
 
+    @Test
+    internal fun `deve obter os detalhes de uma chave pix com sucesso`() {
+
+        val grpcRequest = DetalhaChavePixExternalRequest.newBuilder()
+            .setPixId("be35e15e-86d1-4a35-9e47-fcbaa3938bbd")
+            .setIdCliente("0d1bb194-3c52-4e67-8c35-a93c0af9284f")
+            .build()
+
+        val grpcResponse = DetalhaChavePixExternalResponse.newBuilder()
+            .setPixId("be35e15e-86d1-4a35-9e47-fcbaa3938bbd")
+            .setIdCliente("0d1bb194-3c52-4e67-8c35-a93c0af9284f")
+            .setTipoChave(br.com.zup.edu.proto.TipoChavePix.RANDOM_KEY)
+            .setValorChave("7719525a-6dc0-4664-a1fa-b31fc11286c1")
+            .setCriadoEm("2021-07-13T19:08:59.567765")
+            .build()
+
+        Mockito.`when`(grpcClientMock.detalhaChaveExternal(grpcRequest)).thenReturn(grpcResponse)
+
+        val request =
+            HttpRequest.GET<ChavePixResponse>("/api/v1/key-manager/pix/0d1bb194-3c52-4e67-8c35-a93c0af9284f/be35e15e-86d1-4a35-9e47-fcbaa3938bbd")
+
+        val response = client.toBlocking().exchange(request, Any::class.java)
+
+        assertEquals(HttpStatus.OK, response.status)
+    }
+
+    @Test
+    internal fun `deve obter uma lista de chaves pix com sucesso`() {
+        val grpcRequest = ListaChavesRequest.newBuilder()
+            .setIdCliente("0d1bb194-3c52-4e67-8c35-a93c0af9284f")
+            .build()
+
+        val grpcResponse = ListaChavesResponse.newBuilder()
+            .addAllChaves(
+                mutableListOf(
+                    geraChavePixDetailAleatorio(),
+                    geraChavePixDetailAleatorio(),
+                    geraChavePixDetailAleatorio(),
+                )
+            )
+            .build()
+
+        Mockito.`when`(grpcClientMock.listaChaves(grpcRequest)).thenReturn(grpcResponse)
+
+        val request =
+            HttpRequest.GET<List<ChavePixResponse>>("/api/v1/key-manager/pix/0d1bb194-3c52-4e67-8c35-a93c0af9284f")
+
+        val response = client.toBlocking().exchange(request, List::class.java)
+
+        assertEquals(HttpStatus.OK, response.status)
+        assertEquals(3, response.body().size)
+    }
 
     // Não estou conseguindo testar esse caso porque a excessão não deixa esse cliente funcionar direito. Preciso perguntar como resolver isso
 //    @Test
@@ -90,5 +140,15 @@ internal class ChavePixControllerTest {
     internal class MockitoStubFactory {
         @Singleton
         fun stubMock() = Mockito.mock(KeyManagerServiceGrpc.KeyManagerServiceBlockingStub::class.java)
+    }
+
+    fun geraChavePixDetailAleatorio(): ListaChavesResponse.ListaChavesDetails {
+        return ListaChavesResponse.ListaChavesDetails.newBuilder()
+            .setPixId("be35e15e-86d1-4a35-9e47-fcbaa3938bbd")
+            .setIdCliente("0d1bb194-3c52-4e67-8c35-a93c0af9284f")
+            .setTipoChave(br.com.zup.edu.proto.TipoChavePix.RANDOM_KEY)
+            .setValorChave(UUID.randomUUID().toString())
+            .setCriadoEm("2021-07-13T19:08:59.567765")
+            .build()
     }
 }
