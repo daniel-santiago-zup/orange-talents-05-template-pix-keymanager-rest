@@ -9,13 +9,13 @@ phases:
 
   build:
     commands:
-      - gradle clean build
-      - gradle test
+      - ./gradlew clean build
+      - ./gradlew test
 
   post_build:
     commands:
-      - gradle dockerfile
-      - gradle dockerBuild
+      - ./gradlew dockerfile
+      - ./gradlew dockerBuild
       - echo Build completed on `date`
 
 artifacts:
