@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: openjdk11
+
+  test:
+    commands:
+      - gradlew test
+
+  build:
+    commands:
+      - gradlew clean build
+
+  create_docker_image:
+    commands:
+      - gradlew dockerfile
+      - gradlew dockerBuild
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+
+artifacts:
+  files:
+    - build/libs/key-manager-rest-*-all.jar
