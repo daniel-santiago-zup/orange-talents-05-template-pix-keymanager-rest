@@ -7,21 +7,15 @@ phases:
     commands:
       - echo Passou pela fase de instalação
 
-  test:
-    commands:
-      - gradlew test
-
   build:
     commands:
+      - gradlew test
       - gradlew clean build
-
-  create_docker_image:
-    commands:
-      - gradlew dockerfile
-      - gradlew dockerBuild
 
   post_build:
     commands:
+      - gradlew dockerfile
+      - gradlew dockerBuild
       - echo Build completed on `date`
 
 artifacts:
