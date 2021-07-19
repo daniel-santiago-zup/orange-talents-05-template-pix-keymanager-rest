@@ -4,6 +4,8 @@ phases:
   install:
     runtime-versions:
       java: openjdk11
+    commands:
+      - echo Passou pela fase de instalação
 
   test:
     commands:
