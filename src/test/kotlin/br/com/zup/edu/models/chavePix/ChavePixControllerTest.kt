@@ -2,15 +2,18 @@ package br.com.zup.edu.models.chavePix
 
 import br.com.zup.edu.external.KeyManagerGrpcClientFactory
 import br.com.zup.edu.proto.*
+import io.grpc.Status
 import io.micronaut.context.annotation.Factory
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
+import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito
 import java.util.*
 import javax.inject.Inject
@@ -119,21 +122,48 @@ internal class ChavePixControllerTest {
         assertEquals(3, response.body().size)
     }
 
-    // Não estou conseguindo testar esse caso porque a excessão não deixa esse cliente funcionar direito. Preciso perguntar como resolver isso
-//    @Test
-//    internal fun `deve falhar ao tentar deletar uma chave pix que nao existe`() {
-//        val grpcRequest = DeletaChavePixRequest.newBuilder()
-//            .setPixId("20d4a159-d893-4890-91d0-bd139e7e174b")
-//            .build()
-//
-//        Mockito.`when`(grpcClientMock.deletaChave(grpcRequest)).thenThrow(Status.NOT_FOUND.asRuntimeException())
-//
-//        val request = HttpRequest.DELETE<Any>("/api/v1/key-manager/pix/20d4a159-d893-4890-91d0-bd139e7e174b")
-//
-//        val response = client.toBlocking().exchange(request, Any::class.java)
-//
-//        assertEquals(HttpStatus.NOT_FOUND, response.status)
-//    }
+    // Não estou conseguindo testar esse caso porque a excessão não deixa esse cliente funcionar direito.
+    @Test
+    internal fun `deve falhar ao tentar deletar uma chave pix que nao existe`() {
+        val grpcRequest = DeletaChavePixRequest.newBuilder()
+            .setPixId("20d4a159-d893-4890-91d0-bd139e7e174b")
+            .build()
+
+        Mockito.`when`(grpcClientMock.deletaChave(grpcRequest)).thenThrow(Status.NOT_FOUND.asRuntimeException())
+
+        val request = HttpRequest.DELETE<Any>("/api/v1/key-manager/pix/20d4a159-d893-4890-91d0-bd139e7e174b")
+
+        val error = assertThrows<HttpClientResponseException> {
+            client.toBlocking().exchange(request, Any::class.java)
+        }
+
+        assertEquals(HttpStatus.NOT_FOUND, error.status)
+    }
+
+    @Test
+    internal fun `falha ao registrar chave CPF com erro de formatacao`() {
+
+        val chavePixRequest = ChavePixRequest(
+            idCliente = "0d1bb194-3c52-4e67-8c35-a93c0af9284f",
+            tipoChave = TipoChavePix.CPF,
+            valorChave = "0221059768a",
+            tipoConta = TipoConta.CONTA_POUPANCA
+        )
+
+        Mockito.`when`(grpcClientMock.registraChave(chavePixRequest.converte())).thenReturn(
+            CriaChavePixResponse.newBuilder()
+                .setPixId("20d4a159-d893-4890-91d0-bd139e7e174b")
+                .build()
+        )
+
+        val request = HttpRequest.POST("/api/v1/key-manager/pix", chavePixRequest)
+
+        val error = assertThrows<HttpClientResponseException> {
+            client.toBlocking().exchange(request, Any::class.java)
+        }
+
+        assertEquals(HttpStatus.BAD_REQUEST, error.status)
+    }
 
     @Factory
     @Replaces(factory = KeyManagerGrpcClientFactory::class)
