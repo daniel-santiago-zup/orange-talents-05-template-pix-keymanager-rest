@@ -9,8 +9,8 @@ phases:
 
   build:
     commands:
-      - gradlew test
       - gradlew clean build
+      - gradlew test
 
   post_build:
     commands:
