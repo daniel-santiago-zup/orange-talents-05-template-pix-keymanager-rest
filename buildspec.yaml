@@ -7,6 +7,10 @@ phases:
     commands:
       - echo Passou pela fase de instalação
 
+  pre_build:
+    commands:
+      - chmod 777 ./gradlew
+
   build:
     commands:
       - ./gradlew clean build
@@ -14,7 +18,7 @@ phases:
 
   post_build:
     commands:
-      - ./gradlew dockerfile
+      - sudo ./gradlew dockerfile
       - ./gradlew dockerBuild
       - echo Build completed on `date`
 
