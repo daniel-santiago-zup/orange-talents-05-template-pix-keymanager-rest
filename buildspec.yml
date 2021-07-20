@@ -20,7 +20,7 @@ phases:
 
   post_build:
     commands:
-      - sudo ./gradlew dockerfile
+      - ./gradlew dockerfile
       - ./gradlew dockerBuild
       - echo Build completed on `date`
 
