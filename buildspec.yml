@@ -5,25 +5,37 @@ phases:
     runtime-versions:
       java: corretto11
     commands:
-      - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock --host=tcp://127.0.0.1:2375 --storage-driver=overlay2 &
-      - timeout 15 sh -c "until docker info; do echo .; sleep 1; done"
-      - echo Passou pela fase de instalação
+      - ls
+      - curl -o /bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.16.0/bin/linux/amd64/kubectl
+      - curl -sS -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator
+      - chmod +x /bin/kubectl ./aws-iam-authenticator
+      - chmod 777 ./gradlew
+      - export PATH=$PWD/:$PATH
+      - apt-get update && apt-get -y install jq python3-pip python3-dev && pip3 install --upgrade awscli
 
   pre_build:
     commands:
-      - chmod 777 ./gradlew
+      - export KUBECONFIG=$HOME/.kube/config
+      - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/i2c7a5l2
+      - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --role-arn $ARN_ROLE
 
   build:
     commands:
+      - echo Compilacao iniciada em `date`
       - ./gradlew clean build
-      - ./gradlew test
+      - ./gradlew dockerfile
+      - echo Iniciando build da imagem do container...
+      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG ./build/docker/
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG public.ecr.aws/i2c7a5l2/$IMAGE_REPO_NAME:$IMAGE_TAG
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG public.ecr.aws/i2c7a5l2/$IMAGE_REPO_NAME:$CODEBUILD_BUILD_NUMBER
+
 
   post_build:
     commands:
-      - ./gradlew dockerfile
-      - ./gradlew dockerBuild
-      - echo Build completed on `date`
-
-artifacts:
-  files:
-    - build/libs/key-manager-rest-*-all.jar
+      - echo Enviando imagem para registro de containers...
+      - docker push public.ecr.aws/i2c7a5l2/$IMAGE_REPO_NAME:$IMAGE_TAG
+      - docker push public.ecr.aws/i2c7a5l2/$IMAGE_REPO_NAME:$CODEBUILD_BUILD_NUMBER
+      - echo Aplicando manifestos
+      - kubectl apply -f ./pipeline/manifestos/pix-key-manager-configmap.yaml -f ./pipeline/manifestos/pix-key-manager-deploy.yaml -f ./pipeline/manifestos/pix-key-manager-service.yaml
+      - echo Mudando imagem do deploy
+      - kubectl set image deployments/$DEPLOYMENT_NAME $DEPLOYMENT_NAME=public.ecr.aws/i2c7a5l2/$IMAGE_REPO_NAME:$CODEBUILD_BUILD_NUMBER

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pix-key-manager-rest-deploy
+spec:
+  selector:
+    matchLabels:
+      app: pix-key-manager-rest-deploy
+  template:
+    metadata:
+      labels:
+        app: pix-key-manager-rest-deploy
+    spec:
+      containers:
+      - name: pix-key-manager-rest-deploy
+        image: public.ecr.aws/i2c7a5l2/daniel-santiago-zup/orange-talents-05-template-pix-keymanager-rest
+        ports:
+        - containerPort: 8080
+        envFrom:
+          - configMapRef:
+              name: pix-key-manager-rest-configmap
+  replicas: 3
