@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: pix-key-manager-rest-loadbalancer
 spec:
+  type: LoadBalancer
   selector:
     app: pix-key-manager-rest-deploy
   ports:
